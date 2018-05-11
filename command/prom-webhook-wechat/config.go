@@ -11,7 +11,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/3Golds/prom-webhook-wechat/request"
+	"git.meiqia.com/devops/prom-webhook-wechat/request"
 )
 
 var cfg = struct {
@@ -138,6 +138,9 @@ func (c *wechatApiUrlProfilesFlag) Set(opt string) error {
 	if err != nil {
 		log.Panicf("Failed to request: %s", err)
 	}
+	if getTokenResp.Errcode == 42001 {
+		getTokenResp, err = request.SendGetTokenRequest(apiurl)
+	}
 	wechatapiurl := opt + getTokenResp.AccessToken
 	if wechatapiurl == "" {
 		return errors.New("webhook-url part cannot be emtpy")
@@ -172,3 +175,4 @@ func (c *wechatProfilesFlag) String() string {
 func (c *wechatApiUrlProfilesFlag) String() string {
 	return ""
 }
+
