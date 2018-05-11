@@ -7,6 +7,7 @@ import (
 
 	"github.com/3Golds/prom-webhook-wechat/models"
 	"github.com/3Golds/prom-webhook-wechat/notifier"
+	"github.com/3Golds/prom-webhook-wechat/request"
 	"github.com/pressly/chi"
 )
 
@@ -14,6 +15,8 @@ type WechatResource struct {
 	Profileurl string
 	HttpClient *http.Client
 	Chatids    map[string]string
+	Corpid     string
+	Corpsecret string
 }
 
 func (rs *WechatResource) Routes() chi.Router {
@@ -25,7 +28,13 @@ func (rs *WechatResource) Routes() chi.Router {
 
 func (rs *WechatResource) SendNotification(w http.ResponseWriter, r *http.Request) {
 	profile := chi.URLParam(r, "profile")
-	webhookURL := rs.Profileurl
+	apiurl := "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=" + rs.Corpid + "&corpsecret=" + rs.Corpsecret
+	getTokenResp, err := request.SendGetTokenRequest(apiurl)
+	if err != nil {
+		log.Panicf("Failed to request: %s", err)
+	}
+
+	webhookURL := rs.Profileurl + getTokenResp.AccessToken
 
 	var promMessage models.WebhookMessage
 	dec := json.NewDecoder(r.Body)

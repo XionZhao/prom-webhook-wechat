@@ -4,14 +4,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"text/template"
 	"time"
 	"unicode"
-
-	"git.meiqia.com/devops/prom-webhook-wechat/request"
 )
 
 var cfg = struct {
@@ -19,7 +16,7 @@ var cfg = struct {
 
 	listenAddress        string
 	WechatProfiles       wechatProfilesFlag
-	WechatAPIUrlProfiles wechatApiUrlProfilesFlag
+	WechatAPIUrlProfiles string
 	requestTimeout       time.Duration
 	corpid               string
 	corpsecret           string
@@ -32,7 +29,7 @@ func init() {
 	cfg.fs.StringVar(&cfg.listenAddress, "web.listen-address", ":8060",
 		"Address to listen on for web interface.",
 	)
-	cfg.fs.Var(&cfg.WechatAPIUrlProfiles, "wechat.apiurl",
+	cfg.fs.StringVar(&cfg.WechatAPIUrlProfiles, "wechat.apiurl", "",
 		"Custom wechat api url ",
 	)
 	cfg.fs.DurationVar(&cfg.requestTimeout, "wechat.timeout", 5*time.Second,
@@ -124,30 +121,10 @@ func usage() {
 	}
 }
 
-type wechatApiUrlProfilesFlag struct {
-	profileurl string
-}
-
 type wechatProfilesFlag struct {
 	chatids map[string]string
 }
 
-func (c *wechatApiUrlProfilesFlag) Set(opt string) error {
-	apiurl := "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=" + cfg.corpid + "&corpsecret=" + cfg.corpsecret
-	getTokenResp, err := request.SendGetTokenRequest(apiurl)
-	if err != nil {
-		log.Panicf("Failed to request: %s", err)
-	}
-	if getTokenResp.Errcode == 42001 {
-		getTokenResp, err = request.SendGetTokenRequest(apiurl)
-	}
-	wechatapiurl := opt + getTokenResp.AccessToken
-	if wechatapiurl == "" {
-		return errors.New("webhook-url part cannot be emtpy")
-	}
-	c.profileurl = wechatapiurl
-	return nil
-}
 func (c *wechatProfilesFlag) Set(opt string) error {
 	if c.chatids == nil {
 		c.chatids = make(map[string]string)
@@ -171,8 +148,3 @@ func (c *wechatProfilesFlag) Set(opt string) error {
 func (c *wechatProfilesFlag) String() string {
 	return ""
 }
-
-func (c *wechatApiUrlProfilesFlag) String() string {
-	return ""
-}
-

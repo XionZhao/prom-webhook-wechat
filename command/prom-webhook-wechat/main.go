@@ -28,11 +28,13 @@ func main() {
 	r.Use(middleware.CloseNotify)
 
 	WechatResource := &webrouter.WechatResource{
-		Profileurl: cfg.WechatAPIUrlProfiles.profileurl,
+		Profileurl: cfg.WechatAPIUrlProfiles,
 		HttpClient: &http.Client{
 			Timeout: cfg.requestTimeout,
 		},
-		Chatids: cfg.WechatProfiles.chatids,
+		Chatids:    cfg.WechatProfiles.chatids,
+		Corpid:     cfg.corpid,
+		Corpsecret: cfg.corpsecret,
 	}
 	r.Mount("/wechat", WechatResource.Routes())
 	//r.Mount(, WechatResource.Routes())
